@@ -1,11 +1,21 @@
 import streamlit as st
+
 import io
+import os
+import sys
 
 st.set_page_config(page_title="Vibrant Offer Letter", layout="wide")
 st.title("📄 Vibrant Technology - Internship Offer Letter")
 
 # ===================== DEFAULT TEMPLATE =====================
-DEFAULT_TEMPLATE_PATH = r"C:\Users\IQ\OneDrive\Documents\padas 1\vibrant\offer genrater\ALAN BIJO VARGHESE.docx"
+# Use relative path for cloud compatibility
+DEFAULT_TEMPLATE_PATH = "ALAN BIJO VARGHESE.docx"
+# If running locally in a different directory, try to resolve it
+if not os.path.exists(DEFAULT_TEMPLATE_PATH):
+    # Fallback for local testing
+    fallback = r"C:\Users\IQ\OneDrive\Documents\padas 1\vibrant\offer genrater\ALAN BIJO VARGHESE.docx"
+    if os.path.exists(fallback):
+        DEFAULT_TEMPLATE_PATH = fallback
 
 # ===================== SIDEBAR =====================
 with st.sidebar:
@@ -34,7 +44,6 @@ with st.sidebar:
 if generate_btn:
     import docx
     import tempfile
-    import os
 
     # Helper function to copy font styles
     def add_formatted_run(paragraph, text, is_bold=False, ref_font=None):
@@ -90,31 +99,49 @@ if generate_btn:
         pdf_path = os.path.join(temp_dir, "offer_letter.pdf")
         doc.save(docx_path)
 
-        # Convert to PDF
-        from docx2pdf import convert
-        import pythoncom
-        pythoncom.CoInitialize() # required for COM in threads
-        convert(docx_path, pdf_path)
-
-        # Read the generated files
         with open(docx_path, "rb") as f:
             final_docx = f.read()
-        with open(pdf_path, "rb") as f:
-            final_pdf = f.read()
+
+        final_pdf = None
+        # Convert to PDF only if on Windows (Requires MS Word)
+        if sys.platform == "win32":
+            try:
+                from docx2pdf import convert
+                import pythoncom
+                pythoncom.CoInitialize() # required for COM in threads
+                convert(docx_path, pdf_path)
+                with open(pdf_path, "rb") as f:
+                    final_pdf = f.read()
+            except Exception as e:
+                pass
 
         # ===================== DISPLAY RESULT =====================
         st.success("✅ Offer Letter Generated Successfully!")
 
-        col1, col2 = st.columns([1, 1])
-        with col1:
-            st.download_button(
-                label="📥 Download PDF",
-                data=final_pdf,
-                file_name=f"Offer_Letter_{student_name.replace(' ', '_')}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
-        with col2:
+        if final_pdf:
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                st.download_button(
+                    label="📥 Download PDF",
+                    data=final_pdf,
+                    file_name=f"Offer_Letter_{student_name.replace(' ', '_')}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+            with col2:
+                st.download_button(
+                    label="📝 Download Word (DOCX)",
+                    data=final_docx,
+                    file_name=f"Offer_Letter_{student_name.replace(' ', '_')}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True
+                )
+            st.info("Live PDF Preview")
+            import base64
+            base64_pdf = base64.b64encode(final_pdf).decode('utf-8')
+            pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf"></iframe>'
+            st.markdown(pdf_display, unsafe_allow_html=True)
+        else:
             st.download_button(
                 label="📝 Download Word (DOCX)",
                 data=final_docx,
@@ -122,20 +149,12 @@ if generate_btn:
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 use_container_width=True
             )
-
-        st.info("Live PDF Preview")
-
-        # Preview using base64
-        import base64
-        base64_pdf = base64.b64encode(final_pdf).decode('utf-8')
-        pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf"></iframe>'
-        st.markdown(pdf_display, unsafe_allow_html=True)
+            st.warning("⚠️ Live PDF preview is not available in the Cloud environment. Please download the DOCX file directly.")
 
     except Exception as e:
         st.error(f"Error: {e}")
-        st.info("Make sure Microsoft Word is installed to allow PDF conversion, and the DOCX template exists.")
+        st.info("Make sure the default template exists.")
 
 else:
     st.info("Fill details on the left sidebar and click **Generate**")
-    st.caption("Default template is already set. You can also upload your own.")
-st.caption("Made for clean text replacement using native DOCX formatting")
+    st.caption("Made for clean text replacement using native DOCX formatting")
