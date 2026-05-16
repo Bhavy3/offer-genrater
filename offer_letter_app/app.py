@@ -103,6 +103,7 @@ if generate_btn:
             final_docx = f.read()
 
         final_pdf = None
+        pdf_error = None
         # Convert to PDF depending on Operating System
         if sys.platform == "win32":
             try:
@@ -113,7 +114,7 @@ if generate_btn:
                 with open(pdf_path, "rb") as f:
                     final_pdf = f.read()
             except Exception as e:
-                pass
+                pdf_error = f"Windows PDF Conversion Failed: {e}"
         else:
             # Streamlit Cloud / Linux environments use LibreOffice
             import subprocess
@@ -122,7 +123,7 @@ if generate_btn:
                 with open(pdf_path, "rb") as f:
                     final_pdf = f.read()
             except Exception as e:
-                pass
+                pdf_error = f"Linux PDF Conversion Failed: {e}"
 
         # ===================== DISPLAY RESULT =====================
         st.success("✅ Offer Letter Generated Successfully!")
@@ -158,7 +159,10 @@ if generate_btn:
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 use_container_width=True
             )
-            st.warning("⚠️ Live PDF preview is not available in the Cloud environment. Please download the DOCX file directly.")
+            st.warning("⚠️ Live PDF preview failed.")
+            if pdf_error:
+                st.code(pdf_error)
+            st.info("You can still download the perfect DOCX file using the button above.")
 
     except Exception as e:
         st.error(f"Error: {e}")
