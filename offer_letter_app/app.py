@@ -70,7 +70,7 @@ if generate_btn:
         if len(runs10) >= 6:
             runs10[1].text = student_name
             for i in range(2, 6): 
-                runs10[i].text = ''
+                runs10[i].text = '' 
 
         # 3. Update Enrollment (Paragraph 11)
         for r in doc.paragraphs[11].runs:
