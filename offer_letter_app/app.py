@@ -103,13 +103,22 @@ if generate_btn:
             final_docx = f.read()
 
         final_pdf = None
-        # Convert to PDF only if on Windows (Requires MS Word)
+        # Convert to PDF depending on Operating System
         if sys.platform == "win32":
             try:
                 from docx2pdf import convert
                 import pythoncom
                 pythoncom.CoInitialize() # required for COM in threads
                 convert(docx_path, pdf_path)
+                with open(pdf_path, "rb") as f:
+                    final_pdf = f.read()
+            except Exception as e:
+                pass
+        else:
+            # Streamlit Cloud / Linux environments use LibreOffice
+            import subprocess
+            try:
+                subprocess.run(['libreoffice', '--headless', '--convert-to', 'pdf', docx_path, '--outdir', temp_dir], check=True)
                 with open(pdf_path, "rb") as f:
                     final_pdf = f.read()
             except Exception as e:
