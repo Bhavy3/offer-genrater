@@ -70,28 +70,99 @@ if generate_btn:
         # The issue date is the starting date (as requested: "starting and todays date must be same")
         issue_date = start_date
 
-        # 1. Update Top Right Date (Paragraph 8)
-        for r in doc.paragraphs[8].runs:
-            r.text = r.text.replace('11/05/2026', issue_date)
+        # Convert student name to uppercase as required by the template structure
+        student_name = student_name.upper()
 
-        # 2. Update Name (Paragraph 10)
-        runs10 = doc.paragraphs[10].runs
-        if len(runs10) >= 6:
-            runs10[1].text = student_name
-            for i in range(2, 6): 
-                runs10[i].text = '' 
+        # 1. Handle Paragraph 8 Name & Date alignment specifically using a right-aligned Tab Stop
+        p8_handled = False
+        if len(doc.paragraphs) > 8:
+            p8 = doc.paragraphs[8]
+            has_alan = any('ALAN' in r.text for r in p8.runs)
+            if has_alan and len(p8.runs) >= 10:
+                from docx.enum.text import WD_TAB_ALIGNMENT
+                from docx.shared import Inches
+                
+                # Add Right-Aligned Tab Stop at 6.3 inches (perfect right margin for A4)
+                p8.paragraph_format.tab_stops.add_tab_stop(Inches(7.0), alignment=WD_TAB_ALIGNMENT.RIGHT)
+                
+                p8.runs[1].text = student_name
+                p8.runs[1].bold = True  # Explicitly force bold!
+                p8.runs[2].text = ''
+                p8.runs[3].text = ''
+                p8.runs[4].text = ''
+                p8.runs[5].text = ''
+                
+                # Replace the spaces in between with a single Tab character
+                p8.runs[6].text = '\t'
+                p8.runs[7].text = ''
+                p8.runs[8].text = ''
+                
+                # Replace date in paragraph 8 runs
+                for r in p8.runs:
+                    if '11/05/2026' in r.text:
+                        r.text = r.text.replace('11/05/2026', issue_date)
+                    elif '01/05/2026' in r.text:
+                        r.text = r.text.replace('01/05/2026', issue_date)
+                
+                for i in range(10, len(p8.runs)):
+                    p8.runs[i].text = ''
+                p8_handled = True
 
-        # 3. Update Enrollment (Paragraph 11)
-        for r in doc.paragraphs[11].runs:
-            r.text = r.text.replace('2241230265', enrollment_no)
+        # 2. Clean and robust search-and-replace in other docx paragraphs
+        for idx, p in enumerate(doc.paragraphs):
+            if idx == 8 and p8_handled:
+                continue
+                
+            # Handle dates, enrollment, subject, and clean title typos
+            for r in p.runs:
+                if '11/05/2026' in r.text:
+                    r.text = r.text.replace('11/05/2026', start_date)
+                if '11/08/2026' in r.text:
+                    r.text = r.text.replace('11/08/2026', end_date)
+                if '2241230265' in r.text:
+                    r.text = r.text.replace('2241230265', enrollment_no)
+                if 'Data Science' in r.text:
+                    r.text = r.text.replace('Data Science', subject)
+            
+            # Clean title hyphen and spelling (works even when split across runs)
+            if 'lnternship' in p.text or 'Internship' in p.text:
+                for r in p.runs:
+                    if r.text == '-':
+                        r.text = ''
+                    if 'lnternshi' in r.text:
+                        r.text = r.text.replace('lnternshi', 'Internshi')
 
-        # 4. Update Main Paragraph (Paragraph 18)
-        for r in doc.paragraphs[18].runs:
-            r.text = r.text.replace('11/05/2026', start_date)
-            r.text = r.text.replace('11/08/2026', end_date)
-            r.text = r.text.replace('ALAN BIJO ', student_name)
-            r.text = r.text.replace('VARGHESE', '')
-            r.text = r.text.replace('Data Science', subject)
+            # Handle student name
+            has_alan = any('ALAN' in r.text for r in p.runs)
+            has_bijo = any('BIJO' in r.text for r in p.runs)
+            has_varghese = any('VARGHESE' in r.text for r in p.runs)
+            
+            if has_alan and has_bijo and has_varghese:
+                replaced_combined = False
+                for r in p.runs:
+                    if 'ALAN BIJO VARGHESE' in r.text:
+                        r.text = r.text.replace('ALAN BIJO VARGHESE', student_name)
+                        r.bold = True  # Explicitly force bold!
+                        replaced_combined = True
+                        break
+                
+                if not replaced_combined:
+                    for r in p.runs:
+                        if 'ALAN' in r.text:
+                            r.text = r.text.replace('ALAN', student_name)
+                            r.bold = True
+                        if 'BIJO' in r.text:
+                            r.text = r.text.replace('BIJO', '')
+                        if 'VARGHESE' in r.text:
+                            r.text = r.text.replace('VARGHESE', '')
+            else:
+                for r in p.runs:
+                    if 'ALAN BIJO VARGHESE' in r.text:
+                        r.text = r.text.replace('ALAN BIJO VARGHESE', student_name)
+                        r.bold = True
+                    elif 'ALAN BIJO' in r.text:
+                        r.text = r.text.replace('ALAN BIJO', student_name)
+                        r.bold = True
 
         # Save to temp docx
         temp_dir = tempfile.mkdtemp()
