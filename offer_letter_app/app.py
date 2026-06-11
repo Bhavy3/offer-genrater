@@ -11,70 +11,203 @@ st.set_page_config(page_title="Vibrant Offer Letter", layout="wide")
 
 st.markdown("""
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;700&display=swap');
+
     :root {
-        --bg: #07111f;
-        --panel: rgba(11, 20, 35, 0.92);
-        --panel-2: rgba(16, 27, 47, 0.96);
-        --line: rgba(148, 163, 184, 0.16);
-        --text: #eff6ff;
-        --muted: #bfd2ea;
-        --accent: #7c8cff;
-        --accent-2: #4dd4c5;
+        --bg-deep: #050510;
+        --glass-bg: rgba(13, 14, 38, 0.45);
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --accent-cyan: #00f2fe;
+        --accent-pink: #fa709a;
+        --accent-purple: #c471ed;
+        --text-main: #ffffff;
+        --text-muted: #a0aec0;
     }
+
+    /* Immersive Dark Website Background */
     .stApp {
-        background:
-            radial-gradient(circle at top, rgba(124, 140, 255, 0.12), transparent 30%),
-            linear-gradient(135deg, #040b14 0%, #07111f 45%, #08111f 100%);
-        color: var(--text);
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-deep);
+        background-image: 
+            radial-gradient(ellipse at top left, rgba(250, 112, 154, 0.15), transparent 40%),
+            radial-gradient(ellipse at bottom right, rgba(0, 242, 254, 0.15), transparent 40%),
+            radial-gradient(circle at 50% 50%, rgba(196, 113, 237, 0.1), transparent 50%);
+        background-attachment: fixed;
+        color: var(--text-main);
     }
+
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #07111f 0%, #091722 100%);
-        border-right: 1px solid var(--line);
+        background: rgba(5, 5, 16, 0.8) !important;
+        backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
+        border-right: 1px solid var(--glass-border);
     }
+
     .block-container {
-        padding-top: 1.2rem;
-        padding-bottom: 2rem;
+        padding-top: 2.5rem;
+        padding-bottom: 2.5rem;
     }
+
+    h1, h2, h3, h4, h5, h6, .hero-title {
+        font-family: 'Outfit', sans-serif !important;
+    }
+
+    /* Premium Glass Cards */
     .hero-card, .glass-card {
-        background: linear-gradient(145deg, rgba(12, 20, 35, 0.96), rgba(9, 15, 27, 0.95));
-        border: 1px solid var(--line);
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid var(--glass-border);
         border-radius: 24px;
-        box-shadow: 0 18px 40px rgba(3, 7, 18, 0.45);
-        padding: 1rem 1rem 1.1rem;
-        margin-bottom: 1rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
+
+    .hero-card:hover, .glass-card:hover {
+        transform: translateY(-5px);
+        border: 1px solid rgba(0, 242, 254, 0.3);
+        box-shadow: 0 15px 50px rgba(0, 242, 254, 0.15);
+    }
+
     .hero-badge {
         display: inline-block;
         border-radius: 999px;
-        padding: 0.35rem 0.65rem;
-        background: rgba(124, 140, 255, 0.12);
-        border: 1px solid rgba(124, 140, 255, 0.35);
-        color: #dbe4ff;
-        font-size: 0.9rem;
-        letter-spacing: 0.08em;
+        padding: 0.5rem 1rem;
+        background: rgba(250, 112, 154, 0.15);
+        border: 1px solid rgba(250, 112, 154, 0.4);
+        color: #ff9a9e;
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.15em;
         text-transform: uppercase;
+        margin-bottom: 1rem;
     }
+
     .hero-title {
-        font-size: 2.3rem !important;
+        font-size: 3.2rem !important;
         font-weight: 800 !important;
-        color: #ffffff !important;
-        margin-bottom: 0.2rem !important;
+        background: linear-gradient(to right, #fff, var(--accent-cyan));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.8rem !important;
+        line-height: 1.1 !important;
     }
+
     .hero-subtitle {
-        color: var(--muted) !important;
-        font-size: 1rem !important;
-        line-height: 1.45 !important;
+        color: var(--text-muted) !important;
+        font-size: 1.15rem !important;
+        line-height: 1.7 !important;
+        max-width: 80%;
     }
+
+    /* Metric Boxes */
     .metric-box {
-        background: linear-gradient(160deg, rgba(17, 27, 45, 0.98), rgba(10, 17, 29, 0.98));
-        border: 1px solid rgba(124, 140, 255, 0.22);
-        border-radius: 18px;
-        padding: 0.8rem;
-        margin-bottom: 0.6rem;
+        background: rgba(20, 22, 50, 0.5);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
     }
-    .metric-label { color: #c8d6ef; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.08em; }
-    .metric-value { color: #ffffff; font-size: 1.25rem; font-weight: 700; }
-    div[data-testid="stAlert"] > div { border-radius: 16px; border: 1px solid rgba(124, 140, 255, 0.18); }
+
+    .metric-box::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 4px; height: 100%;
+        background: linear-gradient(to bottom, var(--accent-cyan), var(--accent-purple));
+    }
+
+    .metric-box:hover {
+        transform: scale(1.02);
+        background: rgba(20, 22, 50, 0.8);
+        box-shadow: 0 0 30px rgba(196, 113, 237, 0.2);
+    }
+
+    .metric-label { 
+        color: #8b9eb3; 
+        font-size: 0.85rem; 
+        text-transform: uppercase; 
+        letter-spacing: 0.1em;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 600;
+    }
+    .metric-value { 
+        color: #ffffff; 
+        font-size: 1.8rem; 
+        font-weight: 800; 
+        font-family: 'Outfit', sans-serif;
+        text-shadow: 0 0 15px rgba(0, 242, 254, 0.5);
+    }
+
+    /* Inputs */
+    .stTextInput > div > div > input,
+    .stDateInput > div > div > input {
+        background-color: rgba(10, 11, 26, 0.7) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #fff !important;
+        border-radius: 12px !important;
+        padding: 0.7rem !important;
+        font-family: 'Inter', sans-serif !important;
+        transition: all 0.3s ease;
+    }
+
+    .stTextInput > div > div > input:focus,
+    .stDateInput > div > div > input:focus {
+        border-color: var(--accent-cyan) !important;
+        box-shadow: 0 0 15px rgba(0, 242, 254, 0.3) !important;
+    }
+
+    /* Vibrant Buttons */
+    .stButton > button {
+        background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-cyan) 100%) !important;
+        border: none !important;
+        color: white !important;
+        border-radius: 14px !important;
+        padding: 0.8rem 1.5rem !important;
+        font-family: 'Outfit', sans-serif !important;
+        font-weight: 700 !important;
+        font-size: 1.1rem !important;
+        letter-spacing: 0.05em !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 10px 20px rgba(0, 242, 254, 0.3) !important;
+        text-transform: uppercase;
+        width: 100%;
+    }
+
+    .stButton > button:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 0 15px 30px rgba(0, 242, 254, 0.5) !important;
+        background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-purple) 100%) !important;
+    }
+
+    /* Radio Buttons Container */
+    div[role="radiogroup"] {
+        background: rgba(10, 11, 26, 0.5);
+        padding: 20px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* Alerts and Dataframes */
+    div[data-testid="stAlert"] > div { 
+        background: rgba(10, 11, 26, 0.8);
+        backdrop-filter: blur(15px);
+        border-radius: 16px; 
+        border: 1px solid rgba(250, 112, 154, 0.3); 
+    }
+    
+    [data-testid="stDataFrame"] {
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(10, 11, 26, 0.5);
+    }
 </style>
 """, unsafe_allow_html=True)
 
