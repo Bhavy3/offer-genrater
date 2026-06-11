@@ -1,109 +1,42 @@
-Create a professional Streamlit web application for generating internship offer letters automatically using the provided PDF template as the exact design reference.
+Create an official Internship Confirmation Letter for Vibrant Technology using the exact structure and professional tone specified below. Do not add any extra text, explanations, or different letter formats.
 
-OBJECTIVE:
-The application should allow users to enter student details into a form and instantly generate a professional PDF offer letter that matches the uploaded template design 100% accurately.
+**Fixed Header:**
+To,
+The Principal/HOD
+Asia Pacific Institute of Management
+Ashram Road, 9, Vidya Vihar Colony Rd, opp. Fortune Landmark Hotel, Usmanpura, Ahmedabad, Gujarat 380009
 
-IMPORTANT:
-DO NOT redesign the letter manually.
-USE the uploaded PDF as the fixed background/template.
-Only overlay dynamic student information on top of the template.
+Date: [DATE_IN_DD/MM/YYYY]
 
-APP REQUIREMENTS:
+Subject: Confirmation Letter of Internship at Vibrant Technology
 
-1. TECHNOLOGY
-- Python
-- Streamlit
-- PyMuPDF (fitz)
-- Pillow
-- reportlab
+**Body:**
 
-2. UI DESIGN
-Create a clean and modern Streamlit UI with:
-- Title: "Offer Letter Generator"
-- Left-side input form
-- Right-side live preview section
-- Professional spacing and layout
-- Generate PDF button
-- Download PDF button after generation
+Respected Ma'am/Sir,
 
-3. FORM FIELDS
-Create editable input fields for:
-- Student Name
-- College Name
-- Enrollment Number
-- Starting Date
-- Ending Date
-- Subject
+We are pleased to inform you that the following students of your esteemed institute have been permitted to undertake their internship training at Vibrant Technology.
 
-4. INPUT FORMAT EXAMPLE
+The students will receive practical training in [TECHNOLOGY], along with assignments and project work under the guidance of our mentors. They will spend 12 hours per week, including learning, assignments, and project development activities.
 
-Name: Vora Mohammad Mudassir
-College Name: Shreyarth University
-Enrollment No: 2402104179
-Starting Date: 18/05/2026
-Ending Date: 05/06/2026
-Subject: Data Analysis
+Upon successful completion of the internship program, Vibrant Technology will issue an Internship Completion Certificate to the students.
 
-5. TEMPLATE HANDLING
-- Use the uploaded PDF as the original offer letter template
-- Keep:
-  - Logo
-  - Footer
-  - Header
-  - Signature
-  - Colors
-  - Spacing
-  - Background
-exactly unchanged
+**Student List Table:**
 
-6. TEXT OVERLAY
-Overlay the student details at the correct positions on the PDF.
+No | Student Name | Enrollment Number
+---|---|---
+1 | [Student Full Name 1] | [Enrollment Number 1]
+2 | [Student Full Name 2] | [Enrollment Number 2]
+3 | [Student Full Name 3] | [Enrollment Number 3]
+... [Continue rows as needed]
 
-Replace/add:
-- Student name
-- College name
-- Enrollment number
-- Internship subject
-- Start date
-- End date
+Thank you.
 
-7. OUTPUT
-When the user clicks "Generate Offer Letter":
-- Generate a new PDF
-- Show live preview inside Streamlit
-- Allow instant PDF download
+Mr. Dipen Patel 
+Co-Founder
+Vibrant Technology
 
-8. FILE STRUCTURE
-
-offer_letter_app/
-│
-├── app.py
-├── template.pdf
-├── output/
-├── fonts/
-
-9. CODE REQUIREMENTS
-- Write clean and beginner-friendly code
-- Add comments explaining important sections
-- Use reusable functions
-- Handle missing fields validation
-- Use temporary files safely
-
-10. EXTRA FEATURES
-- Add success message after generation
-- Auto filename:
-  Offer_Letter_<StudentName>.pdf
-
-11. VERY IMPORTANT
-The final generated offer letter must visually match the uploaded PDF template as closely as possible.
-
-Do not create fake placeholder designs.
-Do not use random templates.
-Use the uploaded PDF directly as the reference/template.
-
-12. BONUS IF POSSIBLE
-- Add drag-and-drop PDF template upload
-- Add dark/light mode compatibility
-- Keep code production-ready
-
-Generate the complete working code in one file.
+**Instructions for Generation:**
+- Replace [DATE_IN_DD/MM/YYYY], [TECHNOLOGY], and student details exactly.
+- Keep the table clean and properly aligned.
+- Use formal language only. Do not change any fixed text.
+- Output only the complete letter, nothing else.

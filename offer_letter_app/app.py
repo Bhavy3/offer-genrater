@@ -1,173 +1,401 @@
 import streamlit as st
-
+import datetime
 import io
+import json
 import os
+import shutil
+import subprocess
 import sys
 
 st.set_page_config(page_title="Vibrant Offer Letter", layout="wide")
-st.title("📄 Vibrant Technology - Internship Offer Letter")
+
+st.markdown("""
+<style>
+    :root {
+        --bg: #07111f;
+        --panel: rgba(11, 20, 35, 0.92);
+        --panel-2: rgba(16, 27, 47, 0.96);
+        --line: rgba(148, 163, 184, 0.16);
+        --text: #eff6ff;
+        --muted: #bfd2ea;
+        --accent: #7c8cff;
+        --accent-2: #4dd4c5;
+    }
+    .stApp {
+        background:
+            radial-gradient(circle at top, rgba(124, 140, 255, 0.12), transparent 30%),
+            linear-gradient(135deg, #040b14 0%, #07111f 45%, #08111f 100%);
+        color: var(--text);
+    }
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #07111f 0%, #091722 100%);
+        border-right: 1px solid var(--line);
+    }
+    .block-container {
+        padding-top: 1.2rem;
+        padding-bottom: 2rem;
+    }
+    .hero-card, .glass-card {
+        background: linear-gradient(145deg, rgba(12, 20, 35, 0.96), rgba(9, 15, 27, 0.95));
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        box-shadow: 0 18px 40px rgba(3, 7, 18, 0.45);
+        padding: 1rem 1rem 1.1rem;
+        margin-bottom: 1rem;
+    }
+    .hero-badge {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.35rem 0.65rem;
+        background: rgba(124, 140, 255, 0.12);
+        border: 1px solid rgba(124, 140, 255, 0.35);
+        color: #dbe4ff;
+        font-size: 0.9rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+    .hero-title {
+        font-size: 2.3rem !important;
+        font-weight: 800 !important;
+        color: #ffffff !important;
+        margin-bottom: 0.2rem !important;
+    }
+    .hero-subtitle {
+        color: var(--muted) !important;
+        font-size: 1rem !important;
+        line-height: 1.45 !important;
+    }
+    .metric-box {
+        background: linear-gradient(160deg, rgba(17, 27, 45, 0.98), rgba(10, 17, 29, 0.98));
+        border: 1px solid rgba(124, 140, 255, 0.22);
+        border-radius: 18px;
+        padding: 0.8rem;
+        margin-bottom: 0.6rem;
+    }
+    .metric-label { color: #c8d6ef; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    .metric-value { color: #ffffff; font-size: 1.25rem; font-weight: 700; }
+    div[data-testid="stAlert"] > div { border-radius: 16px; border: 1px solid rgba(124, 140, 255, 0.18); }
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<div class="hero-card">
+  <div class="hero-badge">Premium Offer Letter Studio</div>
+  <div class="hero-title">Create refined internship offers in minutes</div>
+  <div class="hero-subtitle">Generate polished offer letters, store candidate records, and search them instantly by name or enrollment number.</div>
+</div>
+""", unsafe_allow_html=True)
+
+col_a, col_b, col_c = st.columns(3)
+with col_a:
+    st.markdown("<div class='metric-box'><div class='metric-label'>Template</div><div class='metric-value'>DOCX-based</div></div>", unsafe_allow_html=True)
+with col_b:
+    st.markdown("<div class='metric-box'><div class='metric-label'>Search</div><div class='metric-value'>By name / ENO</div></div>", unsafe_allow_html=True)
+with col_c:
+    st.markdown("<div class='metric-box'><div class='metric-label'>Exports</div><div class='metric-value'>PDF + DOCX</div></div>", unsafe_allow_html=True)
+
+main_left, _ = st.columns([1.15, 0.85])
+with main_left:
+    st.markdown("""
+    <div class='glass-card'>
+      <h3 style='margin-top:0;'>Generation Workspace</h3>
+      <p style='color:#bfd2ea;'>Use the sidebar to enter candidate details, upload a custom template, and generate a refined offer letter instantly.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ===================== DEFAULT TEMPLATE =====================
-# Use relative path for cloud compatibility
 DEFAULT_TEMPLATE_PATH = "ALAN BIJO VARGHESE.docx"
-# If running locally in a different directory, try to resolve it
+CONFIRMATION_TEMPLATE_PATH = "offrer - letter - Vibrant tech lab - final.docx"
+HISTORY_FILE = os.path.join(os.path.dirname(__file__), "output", "offer_history.json")
+
+
+def load_offer_history():
+    if not os.path.exists(HISTORY_FILE):
+        return []
+    try:
+        with open(HISTORY_FILE, "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+        return data if isinstance(data, list) else []
+    except Exception:
+        return []
+
+def save_offer_history(entry):
+    history = load_offer_history()
+    history.insert(0, entry)
+    with open(HISTORY_FILE, "w", encoding="utf-8") as handle:
+        json.dump(history[:100], handle, indent=2)
+
+def search_offer_history(query):
+    term = (query or "").strip().lower()
+    if not term:
+        return load_offer_history()
+
+    results = []
+    for entry in load_offer_history():
+        text = " ".join([
+            entry.get("student_name", ""),
+            entry.get("enrollment_no", ""),
+            entry.get("college_name", ""),
+            entry.get("subject", ""),
+        ]).lower()
+        if term in text:
+            results.append(entry)
+    return results
+
+main_right = st.columns([1.15, 0.85])[1]
+with main_right:
+    recent = load_offer_history()[:4]
+    st.markdown("""
+    <div class='glass-card'>
+      <h3 style='margin-top:0;'>Recently Saved</h3>
+      <p style='color:#bfd2ea;'>Quick access to the latest generated records.</p>
+    </div>
+    """, unsafe_allow_html=True)
+    if recent:
+        for item in recent:
+            st.markdown(f"<div class='metric-box'><div class='metric-label'>{item.get('student_name', 'Unknown')}</div><div class='metric-value'>{item.get('enrollment_no', '-')}</div></div>", unsafe_allow_html=True)
+    else:
+        st.info("Generate an offer letter to populate this section.")
+
 if not os.path.exists(DEFAULT_TEMPLATE_PATH):
-    # Fallback for local testing
     fallback = r"C:\Users\IQ\OneDrive\Documents\padas 1\vibrant\offer genrater\ALAN BIJO VARGHESE.docx"
     if os.path.exists(fallback):
         DEFAULT_TEMPLATE_PATH = fallback
 
+if not os.path.exists(CONFIRMATION_TEMPLATE_PATH):
+    fallback_conf = r"C:\Users\IQ\OneDrive\Documents\padas 1\vibrant\offer genrater\offrer - letter - Vibrant tech lab - final.docx"
+    if os.path.exists(fallback_conf):
+        CONFIRMATION_TEMPLATE_PATH = fallback_conf
+
 # ===================== SIDEBAR =====================
 with st.sidebar:
-    st.header("Student Details")
-    
-    student_name = st.text_input("Student Full Name", value="bhavy gajjar")
-    enrollment_no = st.text_input("Enrollment Number", value="2204030100306")
-    
-    import datetime
-    today = datetime.date.today()
-    start_date_obj = st.date_input("Starting Date", value=today)
-    end_date_obj = st.date_input("Ending Date", value=today + datetime.timedelta(days=30))
-    subject = st.text_input("Domain / Subject", value="Java")
-    
-    start_date = start_date_obj.strftime("%d/%m/%Y")
-    end_date = end_date_obj.strftime("%d/%m/%Y")
-    
+    st.markdown("<div class='glass-card'><h3 style='margin-top:0;'>Document Settings</h3></div>", unsafe_allow_html=True)
+    doc_type = st.radio("Select Document Type", ["Offer Letter", "Confirmation Letter"])
     st.divider()
-    st.info("Default template is already loaded")
-    
-    uploaded_file = st.file_uploader("Upload Different Template (Optional)", type=["docx"])
-    
-    generate_btn = st.button("🚀 Generate Offer Letter", type="primary", use_container_width=True)
+
+    if doc_type == "Offer Letter":
+        st.markdown("<div class='glass-card'><h3 style='margin-top:0;'>Candidate Profile</h3><p style='color:#bfd2ea; margin-bottom:0;'>Fill the details below and generate a premium offer letter in one click.</p></div>", unsafe_allow_html=True)
+
+        student_name = st.text_input("Student Full Name", value="bhavy gajjar")
+        college_name = st.text_input("College / University", value="Vibrant University")
+        enrollment_no = st.text_input("Enrollment Number", value="2204030100306")
+
+        today = datetime.date.today()
+        start_date_obj = st.date_input("Starting Date", value=today)
+        end_date_obj = st.date_input("Ending Date", value=today + datetime.timedelta(days=30))
+        subject = st.text_input("Domain / Subject", value="Java")
+
+        start_date = start_date_obj.strftime("%d/%m/%Y")
+        end_date = end_date_obj.strftime("%d/%m/%Y")
+
+        st.info("Default template is already loaded")
+        uploaded_file = st.file_uploader("Upload Different Template (Optional)", type=["docx"])
+
+    else:
+        st.markdown("<div class='glass-card'><h3 style='margin-top:0;'>Confirmation Details</h3><p style='color:#bfd2ea; margin-bottom:0;'>Enter details and student list to generate a confirmation letter.</p></div>", unsafe_allow_html=True)
+        
+        today = datetime.date.today()
+        issue_date_obj = st.date_input("Issue Date", value=today)
+        issue_date = issue_date_obj.strftime("%d/%m/%Y")
+        
+        technology = st.text_input("Technology / Domain", value="Python & Django")
+        
+        st.markdown("#### Students List")
+        default_data = [
+            {"No": 1, "Student Name": "Varsani Jenish", "Enrollment Number": "202312101801"},
+            {"No": 2, "Student Name": "", "Enrollment Number": ""},
+        ]
+        students_data = st.data_editor(default_data, num_rows="dynamic", use_container_width=True)
+        
+        uploaded_file = None
+
+    st.divider()
+    st.markdown("<div class='glass-card'><h3 style='margin-top:0;'>Search Archive</h3><p style='color:#bfd2ea; margin-bottom:0;'>Find stored offers quickly by candidate name or enrollment number.</p></div>", unsafe_allow_html=True)
+    search_query = st.text_input("Name or Enrollment No", placeholder="Search saved offer records")
+
+    if search_query:
+        matches = search_offer_history(search_query)
+        if matches:
+            st.caption(f"{len(matches)} record(s) found")
+            for item in matches[:8]:
+                st.markdown(f"- **{item.get('student_name', 'Unknown')}**\n  ENO: {item.get('enrollment_no', '-')}\n  College: {item.get('college_name', '-')}", unsafe_allow_html=True)
+        else:
+            st.info("No saved offer record matches your search.")
+    else:
+        recent = load_offer_history()[:5]
+        if recent:
+            st.caption("Recent saved records")
+            for item in recent:
+                st.markdown(f"- **{item.get('student_name', 'Unknown')}**  •  ENO: {item.get('enrollment_no', '-')}", unsafe_allow_html=True)
+        else:
+            st.caption("No saved records yet. Generate one to populate this list.")
+
+    st.divider()
+    generate_btn = st.button(f"🚀 Generate {doc_type}", type="primary", use_container_width=True)
 
 # ===================== GENERATION =====================
 if generate_btn:
     import docx
     import tempfile
 
-    # Helper function to copy font styles
-    def add_formatted_run(paragraph, text, is_bold=False, ref_font=None):
-        r = paragraph.add_run(text)
-        r.bold = is_bold
-        if ref_font:
-            if ref_font.name:
-                r.font.name = ref_font.name
-            if ref_font.size:
-                r.font.size = ref_font.size
-            if ref_font.color and ref_font.color.rgb:
-                r.font.color.rgb = ref_font.color.rgb
-        return r
-
     try:
-        # Load the DOCX template
-        if uploaded_file is not None:
-            with open("temp_template.docx", "wb") as f:
-                f.write(uploaded_file.read())
-            doc = docx.Document("temp_template.docx")
-        else:
-            doc = docx.Document(DEFAULT_TEMPLATE_PATH)
+        final_filename = ""
+        student_name_to_save = ""
+        college_name_to_save = ""
+        enrollment_no_to_save = ""
+        subject_to_save = ""
 
-        # The issue date is the starting date (as requested: "starting and todays date must be same")
-        issue_date = start_date
-
-        # Convert student name to uppercase as required by the template structure
-        student_name = student_name.upper()
-
-        # 1. Handle Paragraph 8 Name & Date alignment specifically using a right-aligned Tab Stop
-        p8_handled = False
-        if len(doc.paragraphs) > 8:
-            p8 = doc.paragraphs[8]
-            has_alan = any('ALAN' in r.text for r in p8.runs)
-            if has_alan and len(p8.runs) >= 10:
-                from docx.enum.text import WD_TAB_ALIGNMENT
-                from docx.shared import Inches
-                
-                # Add Right-Aligned Tab Stop at 6.3 inches (perfect right margin for A4)
-                p8.paragraph_format.tab_stops.add_tab_stop(Inches(7.0), alignment=WD_TAB_ALIGNMENT.RIGHT)
-                
-                p8.runs[1].text = student_name
-                p8.runs[1].bold = True  # Explicitly force bold!
-                p8.runs[2].text = ''
-                p8.runs[3].text = ''
-                p8.runs[4].text = ''
-                p8.runs[5].text = ''
-                
-                # Replace the spaces in between with a single Tab character
-                p8.runs[6].text = '\t'
-                p8.runs[7].text = ''
-                p8.runs[8].text = ''
-                
-                # Replace date in paragraph 8 runs
-                for r in p8.runs:
-                    if '11/05/2026' in r.text:
-                        r.text = r.text.replace('11/05/2026', issue_date)
-                    elif '01/05/2026' in r.text:
-                        r.text = r.text.replace('01/05/2026', issue_date)
-                
-                for i in range(10, len(p8.runs)):
-                    p8.runs[i].text = ''
-                p8_handled = True
-
-        # 2. Clean and robust search-and-replace in other docx paragraphs
-        for idx, p in enumerate(doc.paragraphs):
-            if idx == 8 and p8_handled:
-                continue
-                
-            # Handle dates, enrollment, subject, and clean title typos
-            for r in p.runs:
-                if '11/05/2026' in r.text:
-                    r.text = r.text.replace('11/05/2026', start_date)
-                if '11/08/2026' in r.text:
-                    r.text = r.text.replace('11/08/2026', end_date)
-                if '2241230265' in r.text:
-                    r.text = r.text.replace('2241230265', enrollment_no)
-                if 'Data Science' in r.text:
-                    r.text = r.text.replace('Data Science', subject)
-            
-            # Clean title hyphen and spelling (works even when split across runs)
-            if 'lnternship' in p.text or 'Internship' in p.text:
-                for r in p.runs:
-                    if r.text == '-':
-                        r.text = ''
-                    if 'lnternshi' in r.text:
-                        r.text = r.text.replace('lnternshi', 'Internshi')
-
-            # Handle student name
-            has_alan = any('ALAN' in r.text for r in p.runs)
-            has_bijo = any('BIJO' in r.text for r in p.runs)
-            has_varghese = any('VARGHESE' in r.text for r in p.runs)
-            
-            if has_alan and has_bijo and has_varghese:
-                replaced_combined = False
-                for r in p.runs:
-                    if 'ALAN BIJO VARGHESE' in r.text:
-                        r.text = r.text.replace('ALAN BIJO VARGHESE', student_name)
-                        r.bold = True  # Explicitly force bold!
-                        replaced_combined = True
-                        break
-                
-                if not replaced_combined:
-                    for r in p.runs:
-                        if 'ALAN' in r.text:
-                            r.text = r.text.replace('ALAN', student_name)
-                            r.bold = True
-                        if 'BIJO' in r.text:
-                            r.text = r.text.replace('BIJO', '')
-                        if 'VARGHESE' in r.text:
-                            r.text = r.text.replace('VARGHESE', '')
+        if doc_type == "Offer Letter":
+            if uploaded_file is not None:
+                with open("temp_template.docx", "wb") as f:
+                    f.write(uploaded_file.read())
+                doc = docx.Document("temp_template.docx")
             else:
+                doc = docx.Document(DEFAULT_TEMPLATE_PATH)
+
+            issue_date = start_date
+            student_name_upper = student_name.upper()
+            
+            student_name_to_save = student_name
+            college_name_to_save = college_name
+            enrollment_no_to_save = enrollment_no
+            subject_to_save = subject
+
+            p8_handled = False
+            if len(doc.paragraphs) > 8:
+                p8 = doc.paragraphs[8]
+                has_alan = any('ALAN' in r.text for r in p8.runs)
+                if has_alan and len(p8.runs) >= 10:
+                    from docx.enum.text import WD_TAB_ALIGNMENT
+                    from docx.shared import Inches
+                    
+                    p8.paragraph_format.tab_stops.add_tab_stop(Inches(7.0), alignment=WD_TAB_ALIGNMENT.RIGHT)
+                    
+                    p8.runs[1].text = student_name_upper
+                    p8.runs[1].bold = True
+                    p8.runs[2].text = ''
+                    p8.runs[3].text = ''
+                    p8.runs[4].text = ''
+                    p8.runs[5].text = ''
+                    
+                    p8.runs[6].text = '\t'
+                    p8.runs[7].text = ''
+                    p8.runs[8].text = ''
+                    
+                    for r in p8.runs:
+                        if '11/05/2026' in r.text:
+                            r.text = r.text.replace('11/05/2026', issue_date)
+                        elif '01/05/2026' in r.text:
+                            r.text = r.text.replace('01/05/2026', issue_date)
+                    
+                    for i in range(10, len(p8.runs)):
+                        p8.runs[i].text = ''
+                    p8_handled = True
+
+            for idx, p in enumerate(doc.paragraphs):
+                if idx == 8 and p8_handled:
+                    continue
+                    
                 for r in p.runs:
-                    if 'ALAN BIJO VARGHESE' in r.text:
-                        r.text = r.text.replace('ALAN BIJO VARGHESE', student_name)
-                        r.bold = True
-                    elif 'ALAN BIJO' in r.text:
-                        r.text = r.text.replace('ALAN BIJO', student_name)
-                        r.bold = True
+                    if '11/05/2026' in r.text:
+                        r.text = r.text.replace('11/05/2026', start_date)
+                    if '11/08/2026' in r.text:
+                        r.text = r.text.replace('11/08/2026', end_date)
+                    if '2241230265' in r.text:
+                        r.text = r.text.replace('2241230265', enrollment_no)
+                    if 'Data Science' in r.text:
+                        r.text = r.text.replace('Data Science', subject)
+                
+                if 'lnternship' in p.text or 'Internship' in p.text:
+                    for r in p.runs:
+                        if r.text == '-':
+                            r.text = ''
+                        if 'lnternshi' in r.text:
+                            r.text = r.text.replace('lnternshi', 'Internshi')
+
+                has_alan = any('ALAN' in r.text for r in p.runs)
+                has_bijo = any('BIJO' in r.text for r in p.runs)
+                has_varghese = any('VARGHESE' in r.text for r in p.runs)
+                
+                if has_alan and has_bijo and has_varghese:
+                    replaced_combined = False
+                    for r in p.runs:
+                        if 'ALAN BIJO VARGHESE' in r.text:
+                            r.text = r.text.replace('ALAN BIJO VARGHESE', student_name_upper)
+                            r.bold = True
+                            replaced_combined = True
+                            break
+                    
+                    if not replaced_combined:
+                        for r in p.runs:
+                            if 'ALAN' in r.text:
+                                r.text = r.text.replace('ALAN', student_name_upper)
+                                r.bold = True
+                            if 'BIJO' in r.text:
+                                r.text = r.text.replace('BIJO', '')
+                            if 'VARGHESE' in r.text:
+                                r.text = r.text.replace('VARGHESE', '')
+                else:
+                    for r in p.runs:
+                        if 'ALAN BIJO VARGHESE' in r.text:
+                            r.text = r.text.replace('ALAN BIJO VARGHESE', student_name_upper)
+                            r.bold = True
+                        elif 'ALAN BIJO' in r.text:
+                            r.text = r.text.replace('ALAN BIJO', student_name_upper)
+                            r.bold = True
+
+            final_filename = f"Offer_Letter_{student_name.replace(' ', '_')}"
+
+        else:
+            # Confirmation Letter Logic
+            doc = docx.Document(CONFIRMATION_TEMPLATE_PATH)
+            
+            student_name_to_save = "Batch Confirmation"
+            college_name_to_save = "Multiple Students"
+            enrollment_no_to_save = "-"
+            subject_to_save = technology
+            start_date = issue_date
+            end_date = issue_date
+
+            for p in doc.paragraphs:
+                if '11/06/2026' in p.text or 'Python & Django' in p.text:
+                    new_text = p.text.replace('11/06/2026', issue_date).replace('Python & Django', technology)
+                    if len(p.runs) > 0:
+                        p.runs[0].text = new_text
+                        for i in range(1, len(p.runs)):
+                            p.runs[i].text = ""
+            
+            if len(doc.tables) > 0:
+                table = doc.tables[0]
+                
+                # Keep only the first row (header)
+                for i in range(len(table.rows) - 1, 0, -1):
+                    tbl = table._tbl
+                    tr = table.rows[i]._tr
+                    tbl.remove(tr)
+                
+                # Filter valid students
+                valid_students = []
+                for row in students_data:
+                    name = str(row.get('Student Name', '')).strip()
+                    if name:
+                        valid_students.append(row)
+                
+                # Populate rows
+                for idx, row in enumerate(valid_students):
+                    new_row = table.add_row()
+                    new_row.cells[0].text = str(idx + 1)
+                    new_row.cells[1].text = str(row.get('Student Name', ''))
+                    new_row.cells[2].text = str(row.get('Enrollment Number', ''))
+
+            final_filename = f"Confirmation_Letter_{issue_date.replace('/','_')}"
+
 
         # Save to temp docx
-        temp_dir = tempfile.mkdtemp()
-        docx_path = os.path.join(temp_dir, "offer_letter.docx")
-        pdf_path = os.path.join(temp_dir, "offer_letter.pdf")
+        temp_dir = os.path.join(os.path.dirname(__file__), "output", "temp")
+        os.makedirs(temp_dir, exist_ok=True)
+        docx_path = os.path.join(temp_dir, "document.docx")
+        pdf_path = os.path.join(temp_dir, "document.pdf")
         doc.save(docx_path)
 
         with open(docx_path, "rb") as f:
@@ -175,29 +403,71 @@ if generate_btn:
 
         final_pdf = None
         pdf_error = None
-        # Convert to PDF depending on Operating System
-        if sys.platform == "win32":
-            try:
-                from docx2pdf import convert
-                import pythoncom
-                pythoncom.CoInitialize() # required for COM in threads
-                convert(docx_path, pdf_path)
-                with open(pdf_path, "rb") as f:
-                    final_pdf = f.read()
-            except Exception as e:
-                pdf_error = f"Windows PDF Conversion Failed: {e}"
-        else:
-            # Streamlit Cloud / Linux environments use LibreOffice
-            import subprocess
-            try:
-                subprocess.run(['libreoffice', '--headless', '--convert-to', 'pdf', docx_path, '--outdir', temp_dir], check=True)
-                with open(pdf_path, "rb") as f:
-                    final_pdf = f.read()
-            except Exception as e:
-                pdf_error = f"Linux PDF Conversion Failed: {e}"
+
+        def convert_docx_to_pdf(source_path, destination_path, output_dir):
+            if sys.platform == "win32":
+                try:
+                    from docx2pdf import convert
+                    try:
+                        import pythoncom
+                        pythoncom.CoInitialize()
+                    except Exception:
+                        pass
+                    convert(source_path, destination_path)
+                    return True
+                except Exception as first_error:
+                    candidates = [
+                        shutil.which('libreoffice'),
+                        shutil.which('soffice'),
+                    ]
+                    for path in [r'C:\Program Files\LibreOffice\program\soffice.exe', r'C:\Program Files (x86)\LibreOffice\program\soffice.exe']:
+                        if os.path.exists(path):
+                            candidates.append(path)
+                            
+                    converter = next((path for path in candidates if path), None)
+                    if not converter:
+                        raise RuntimeError(f"Windows PDF conversion failed (ensure docx2pdf is installed or MS Word/LibreOffice is available). Inner Error: {first_error}") from first_error
+
+                    subprocess.run(
+                        [converter, '--headless', '--convert-to', 'pdf', source_path, '--outdir', output_dir],
+                        check=True,
+                        capture_output=True,
+                        text=True,
+                    )
+                    return True
+            else:
+                converter = shutil.which('libreoffice') or shutil.which('soffice')
+                if not converter:
+                    raise FileNotFoundError('LibreOffice/soffice was not found for PDF conversion.')
+
+                subprocess.run(
+                    [converter, '--headless', '--convert-to', 'pdf', source_path, '--outdir', output_dir],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                return True
+
+        try:
+            convert_docx_to_pdf(docx_path, pdf_path, temp_dir)
+            with open(pdf_path, "rb") as f:
+                final_pdf = f.read()
+        except Exception as e:
+            pdf_error = f"PDF Conversion Failed: {e}"
 
         # ===================== DISPLAY RESULT =====================
-        st.success("✅ Offer Letter Generated Successfully!")
+        st.success(f"✅ {doc_type} Generated Successfully!")
+
+        def log_download():
+            save_offer_history({
+                "student_name": student_name_to_save,
+                "college_name": college_name_to_save,
+                "enrollment_no": enrollment_no_to_save,
+                "start_date": start_date,
+                "end_date": end_date,
+                "subject": subject_to_save,
+                "saved_at": datetime.datetime.now().isoformat(timespec="seconds"),
+            })
 
         if final_pdf:
             col1, col2 = st.columns([1, 1])
@@ -205,17 +475,19 @@ if generate_btn:
                 st.download_button(
                     label="📥 Download PDF",
                     data=final_pdf,
-                    file_name=f"Offer_Letter_{student_name.replace(' ', '_')}.pdf",
+                    file_name=f"{final_filename}.pdf",
                     mime="application/pdf",
-                    use_container_width=True
+                    use_container_width=True,
+                    on_click=log_download
                 )
             with col2:
                 st.download_button(
                     label="📝 Download Word (DOCX)",
                     data=final_docx,
-                    file_name=f"Offer_Letter_{student_name.replace(' ', '_')}.docx",
+                    file_name=f"{final_filename}.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    use_container_width=True
+                    use_container_width=True,
+                    on_click=log_download
                 )
             st.info("Live PDF Preview")
             import base64
@@ -226,9 +498,10 @@ if generate_btn:
             st.download_button(
                 label="📝 Download Word (DOCX)",
                 data=final_docx,
-                file_name=f"Offer_Letter_{student_name.replace(' ', '_')}.docx",
+                file_name=f"{final_filename}.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True
+                use_container_width=True,
+                on_click=log_download
             )
             st.warning("⚠️ Live PDF preview failed.")
             if pdf_error:
