@@ -239,6 +239,7 @@ with main_left:
 # ===================== DEFAULT TEMPLATE =====================
 DEFAULT_TEMPLATE_PATH = "ALAN BIJO VARGHESE.docx"
 CONFIRMATION_TEMPLATE_PATH = "offrer - letter - Vibrant tech lab - final.docx"
+COMPLETION_TEMPLATE_PATH = "Chaitya shah  comp .docx"
 HISTORY_FILE = os.path.join(os.path.dirname(__file__), "output", "offer_history.json")
 
 
@@ -300,10 +301,15 @@ if not os.path.exists(CONFIRMATION_TEMPLATE_PATH):
     if os.path.exists(fallback_conf):
         CONFIRMATION_TEMPLATE_PATH = fallback_conf
 
+if not os.path.exists(COMPLETION_TEMPLATE_PATH):
+    fallback_comp = r"C:\Users\IQ\OneDrive\Documents\padas 1\vibrant\offer genrater\Chaitya shah  comp .docx"
+    if os.path.exists(fallback_comp):
+        COMPLETION_TEMPLATE_PATH = fallback_comp
+
 # ===================== SIDEBAR =====================
 with st.sidebar:
     st.markdown("<div class='glass-card'><h3 style='margin-top:0;'>Document Settings</h3></div>", unsafe_allow_html=True)
-    doc_type = st.radio("Select Document Type", ["Offer Letter", "Confirmation Letter"])
+    doc_type = st.radio("Select Document Type", ["Offer Letter", "Confirmation Letter", "Completion Certificate"])
     st.divider()
 
     if doc_type == "Offer Letter":
@@ -326,7 +332,7 @@ with st.sidebar:
         st.info("Default template is already loaded")
         uploaded_file = st.file_uploader("Upload Different Template (Optional)", type=["docx"])
 
-    else:
+    elif doc_type == "Confirmation Letter":
         st.markdown("<div class='glass-card'><h3 style='margin-top:0;'>Confirmation Details</h3><p style='color:#bfd2ea; margin-bottom:0;'>Enter details and student list to generate a confirmation letter.</p></div>", unsafe_allow_html=True)
         
         today = datetime.date.today()
@@ -343,6 +349,26 @@ with st.sidebar:
         students_data = st.data_editor(default_data, num_rows="dynamic", use_container_width=True)
         
         uploaded_file = None
+
+    elif doc_type == "Completion Certificate":
+        st.markdown("<div class='glass-card'><h3 style='margin-top:0;'>Certificate Details</h3><p style='color:#bfd2ea; margin-bottom:0;'>Fill the details to generate a completion certificate.</p></div>", unsafe_allow_html=True)
+        
+        student_name = st.text_input("Student Full Name", value="Chaitya shah")
+        enrollment_no = st.text_input("Enrollment Number", value="230020116060")
+        subject = st.text_input("Domain / Subject", value="Python With Data Analytics")
+        grade = st.text_input("Grade", value="A")
+        
+        today = datetime.date.today()
+        issue_date_obj = st.date_input("Issue Date", value=today)
+        start_date_obj = st.date_input("Starting Date", value=today - datetime.timedelta(days=30))
+        end_date_obj = st.date_input("Ending Date", value=today)
+
+        issue_date = issue_date_obj.strftime("%d/%m/%Y")
+        start_date = start_date_obj.strftime("%d/%m/%Y")
+        end_date = end_date_obj.strftime("%d/%m/%Y")
+        
+        st.info("Default template is already loaded")
+        uploaded_file = st.file_uploader("Upload Different Template (Optional)", type=["docx"])
 
     st.divider()
     st.markdown("<div class='glass-card'><h3 style='margin-top:0;'>Search Archive</h3><p style='color:#bfd2ea; margin-bottom:0;'>Find stored offers quickly by candidate name or enrollment number.</p></div>", unsafe_allow_html=True)
@@ -480,7 +506,7 @@ if generate_btn:
 
             final_filename = f"Offer_Letter_{student_name.replace(' ', '_')}"
 
-        else:
+        elif doc_type == "Confirmation Letter":
             # Confirmation Letter Logic
             doc = docx.Document(CONFIRMATION_TEMPLATE_PATH)
             
@@ -523,6 +549,38 @@ if generate_btn:
                     new_row.cells[2].text = str(row.get('Enrollment Number', ''))
 
             final_filename = f"Confirmation_Letter_{issue_date.replace('/','_')}"
+
+        elif doc_type == "Completion Certificate":
+            if uploaded_file is not None:
+                with open("temp_template.docx", "wb") as f:
+                    f.write(uploaded_file.read())
+                doc = docx.Document("temp_template.docx")
+            else:
+                doc = docx.Document(COMPLETION_TEMPLATE_PATH)
+
+            student_name_to_save = student_name
+            college_name_to_save = "-"
+            enrollment_no_to_save = enrollment_no
+            subject_to_save = subject
+
+            for p in doc.paragraphs:
+                if 'Issued on:' in p.text and 'Enroll on:' in p.text:
+                    new_text = p.text.replace('15/06/2026', issue_date).replace('230020116060', enrollment_no)
+                    if len(p.runs) > 0:
+                        p.runs[0].text = new_text
+                        for i in range(1, len(p.runs)):
+                            p.runs[i].text = ""
+                elif 'This is to certify that' in p.text:
+                    p.clear()
+                    p.add_run("This is to certify that ")
+                    r_name = p.add_run(student_name)
+                    r_name.bold = True
+                    p.add_run(f" successfully completed internship with grade {grade} for ")
+                    r_subj = p.add_run(subject)
+                    r_subj.bold = True
+                    p.add_run(f" conducted by Vibrant Technology from {start_date} to {end_date} at 801, Silicon Tower, Law Garden, opp. Axis Bank, Ellisbridge, Ahmedabad,.")
+
+            final_filename = f"Completion_Certificate_{student_name.replace(' ', '_')}"
 
 
         # Save to temp docx
