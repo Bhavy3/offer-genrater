@@ -314,10 +314,12 @@ with st.sidebar:
         enrollment_no = st.text_input("Enrollment Number", value="2204030100306")
 
         today = datetime.date.today()
+        issue_date_obj = st.date_input("Issue Date", value=today)
         start_date_obj = st.date_input("Starting Date", value=today)
         end_date_obj = st.date_input("Ending Date", value=today + datetime.timedelta(days=30))
         subject = st.text_input("Domain / Subject", value="Java")
 
+        issue_date = issue_date_obj.strftime("%d/%m/%Y")
         start_date = start_date_obj.strftime("%d/%m/%Y")
         end_date = end_date_obj.strftime("%d/%m/%Y")
 
@@ -386,7 +388,6 @@ if generate_btn:
             else:
                 doc = docx.Document(DEFAULT_TEMPLATE_PATH)
 
-            issue_date = start_date
             student_name_upper = student_name.upper()
             
             student_name_to_save = student_name
@@ -596,6 +597,7 @@ if generate_btn:
                 "student_name": student_name_to_save,
                 "college_name": college_name_to_save,
                 "enrollment_no": enrollment_no_to_save,
+                "issue_date": issue_date,
                 "start_date": start_date,
                 "end_date": end_date,
                 "subject": subject_to_save,
