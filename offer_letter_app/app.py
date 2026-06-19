@@ -564,8 +564,8 @@ if generate_btn:
             subject_to_save = subject
 
             for p in doc.paragraphs:
-                if 'Issued on:' in p.text and 'Enroll on:' in p.text:
-                    new_text = p.text.replace('15/06/2026', issue_date).replace('230020116060', enrollment_no)
+                if 'Issued on:' in p.text and ('Enroll on:' in p.text or 'Enrollment on:' in p.text):
+                    new_text = p.text.replace('19/06/2026', issue_date).replace('2402106051', enrollment_no).replace('230020116060', enrollment_no)
                     if len(p.runs) > 0:
                         p.runs[0].text = new_text
                         for i in range(1, len(p.runs)):
