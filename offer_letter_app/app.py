@@ -239,7 +239,7 @@ with main_left:
 # ===================== DEFAULT TEMPLATE =====================
 DEFAULT_TEMPLATE_PATH = "ALAN BIJO VARGHESE.docx"
 CONFIRMATION_TEMPLATE_PATH = "offrer - letter - Vibrant tech lab - final.docx"
-COMPLETION_TEMPLATE_PATH = "Chaitya shah  comp .docx"
+COMPLETION_TEMPLATE_PATH = "Chaitya shah  comp.docx"
 HISTORY_FILE = os.path.join(os.path.dirname(__file__), "output", "offer_history.json")
 
 
@@ -302,7 +302,7 @@ if not os.path.exists(CONFIRMATION_TEMPLATE_PATH):
         CONFIRMATION_TEMPLATE_PATH = fallback_conf
 
 if not os.path.exists(COMPLETION_TEMPLATE_PATH):
-    fallback_comp = r"C:\Users\IQ\OneDrive\Documents\padas 1\vibrant\offer genrater\Chaitya shah  comp .docx"
+    fallback_comp = r"C:\Users\IQ\OneDrive\Documents\padas 1\vibrant\offer genrater\Chaitya shah  comp.docx"
     if os.path.exists(fallback_comp):
         COMPLETION_TEMPLATE_PATH = fallback_comp
 
