@@ -238,7 +238,7 @@ with main_left:
 
 # ===================== DEFAULT TEMPLATE =====================
 DEFAULT_TEMPLATE_PATH = "ALAN BIJO VARGHESE.docx"
-CONFIRMATION_TEMPLATE_PATH = "offrer - letter - Vibrant tech lab - final.docx"
+CONFIRMATION_TEMPLATE_PATH = "_Vibrant tech lab - kishan , hetansh.docx"
 COMPLETION_TEMPLATE_PATH = "Chaitya shah  comp.docx"
 HISTORY_FILE = os.path.join(os.path.dirname(__file__), "output", "offer_history.json")
 
@@ -297,7 +297,7 @@ if not os.path.exists(DEFAULT_TEMPLATE_PATH):
         DEFAULT_TEMPLATE_PATH = fallback
 
 if not os.path.exists(CONFIRMATION_TEMPLATE_PATH):
-    fallback_conf = r"C:\Users\IQ\OneDrive\Documents\padas 1\vibrant\offer genrater\offrer - letter - Vibrant tech lab - final.docx"
+    fallback_conf = r"c:\Users\IQ\OneDrive\Music\Documents\padas 1\vibrant\offer genrater\_Vibrant tech lab - kishan , hetansh.docx"
     if os.path.exists(fallback_conf):
         CONFIRMATION_TEMPLATE_PATH = fallback_conf
 
@@ -335,11 +335,21 @@ with st.sidebar:
     elif doc_type == "Confirmation Letter":
         st.markdown("<div class='glass-card'><h3 style='margin-top:0;'>Confirmation Details</h3><p style='color:#bfd2ea; margin-bottom:0;'>Enter details and student list to generate a confirmation letter.</p></div>", unsafe_allow_html=True)
         
+        colleges = {
+            "President Institute Of Computer Application": "President Institute Of Computer Application. Shayona Study Campus, Shayona City,\nGhatlodiya, Ahmedabad -380061",
+            "K. K, SHASHTRI GOVERNMENT COLLEGES": "SHRI K. K, SHASHTRI GOVERNMENT COLLEGES CAMPUS, Khokhra Rd, Ambica Society, Maninagar East, Maninagar, Ahmedabad, Gujarat 380008",
+            "Asia Pacific Institute of Management": "Asia Pacific Institute of Management Ashram Road, 9, Vidya Vihar Colony Rd, opp. Fortune Landmark Hotel Usmanpura, Ahmedabad, Gujarat 380009"
+        }
+        selected_college = st.selectbox("Select College", list(colleges.keys()))
+        college_address = colleges[selected_college]
+        st.markdown(f"<div style='margin-bottom: 15px; color: #a0aec0; background: rgba(10, 11, 26, 0.5); padding: 10px; border-radius: 8px;'><b>Address:</b><br>{college_address.replace(chr(10), '<br>')}</div>", unsafe_allow_html=True)
+
         today = datetime.date.today()
         issue_date_obj = st.date_input("Issue Date", value=today)
         issue_date = issue_date_obj.strftime("%d/%m/%Y")
         
-        technology = st.text_input("Technology / Domain", value="Python & Django")
+        project_name = st.text_input("Project Name", value="Travels with Strangers")
+        technology = st.text_input("Technology / Domain", value="Php")
         
         st.markdown("#### Students List")
         default_data = [
@@ -511,42 +521,77 @@ if generate_btn:
             doc = docx.Document(CONFIRMATION_TEMPLATE_PATH)
             
             student_name_to_save = "Batch Confirmation"
-            college_name_to_save = "Multiple Students"
+            college_name_to_save = selected_college
             enrollment_no_to_save = "-"
             subject_to_save = technology
             start_date = issue_date
             end_date = issue_date
 
+            addr_lines = college_address.split('\n')
+            addr_line1 = addr_lines[0]
+            addr_line2 = addr_lines[1] if len(addr_lines) > 1 else ""
+
             for p in doc.paragraphs:
-                if '11/06/2026' in p.text or 'Python & Django' in p.text:
-                    new_text = p.text.replace('11/06/2026', issue_date).replace('Python & Django', technology)
+                if 'President Institute Of Computer Application. Shayona Study Campus, Shayona City,' in p.text:
+                    new_text = p.text.replace('President Institute Of Computer Application. Shayona Study Campus, Shayona City,', addr_line1)
                     if len(p.runs) > 0:
                         p.runs[0].text = new_text
                         for i in range(1, len(p.runs)):
                             p.runs[i].text = ""
+                
+                if 'Ghatlodiya, Ahmedabad -380061' in p.text:
+                    new_text = p.text.replace('Ghatlodiya, Ahmedabad -380061', addr_line2)
+                    if len(p.runs) > 0:
+                        p.runs[0].text = new_text
+                        for i in range(1, len(p.runs)):
+                            p.runs[i].text = ""
+
+                if '18/06/2026' in p.text:
+                    new_text = p.text.replace('18/06/2026', issue_date)
+                    if len(p.runs) > 0:
+                        p.runs[0].text = new_text
+                        for i in range(1, len(p.runs)):
+                            p.runs[i].text = ""
+                
+                if 'Travels with Strangers' in p.text or 'Php' in p.text:
+                    p.clear()
+                    p.add_run("The students will work on the ")
+                    
+                    r_proj = p.add_run(project_name)
+                    r_proj.bold = True
+                    
+                    p.add_run(" Project using ")
+                    
+                    r_tech = p.add_run(technology)
+                    r_tech.bold = True
+                    
+                    p.add_run(". During the training period, they will receive practical guidance from our mentors and work on assignments and project development activities. They will spend 14 hours per week, including learning, assignments, and project work, to gain hands-on experience and enhance their technical skills.")
             
-            if len(doc.tables) > 0:
-                table = doc.tables[0]
+            from docx.text.paragraph import Paragraph
+            all_paragraphs = list(doc.paragraphs)
+            all_paragraphs.extend([Paragraph(p, doc._body) for p in doc.element.xpath('//w:txbxContent//w:p')])
+
+            placeholders = [
+                ('Khambhadiya Taksh Khodabhai', '202435802415'),
+                ('Parmar Kishan S.', '202435802495'),
+                ('Shah Hetansh Bipinbhai', '202435802587')
+            ]
+            
+            for i in range(3):
+                new_name = str(students_data[i].get('Student Name', '')).strip() if i < len(students_data) else ''
+                new_enrollment = str(students_data[i].get('Enrollment Number', '')).strip() if i < len(students_data) else ''
                 
-                # Keep only the first row (header)
-                for i in range(len(table.rows) - 1, 0, -1):
-                    tbl = table._tbl
-                    tr = table.rows[i]._tr
-                    tbl.remove(tr)
+                old_name, old_enrollment = placeholders[i]
                 
-                # Filter valid students
-                valid_students = []
-                for row in students_data:
-                    name = str(row.get('Student Name', '')).strip()
-                    if name:
-                        valid_students.append(row)
-                
-                # Populate rows
-                for idx, row in enumerate(valid_students):
-                    new_row = table.add_row()
-                    new_row.cells[0].text = str(idx + 1)
-                    new_row.cells[1].text = str(row.get('Student Name', ''))
-                    new_row.cells[2].text = str(row.get('Enrollment Number', ''))
+                for p in all_paragraphs:
+                    for r in p.runs:
+                        if old_name in r.text:
+                            r.text = r.text.replace(old_name, new_name)
+                        if old_enrollment in r.text:
+                            r.text = r.text.replace(old_enrollment, new_enrollment)
+                    # Fallback to paragraph-level replacement if the text is split across runs
+                    if old_name in p.text or old_enrollment in p.text:
+                        p.text = p.text.replace(old_name, new_name).replace(old_enrollment, new_enrollment)
 
             final_filename = f"Confirmation_Letter_{issue_date.replace('/','_')}"
 
