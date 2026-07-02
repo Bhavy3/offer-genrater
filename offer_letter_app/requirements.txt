@@ -50,6 +50,6 @@ urllib3==2.7.0
 uvicorn==0.49.0
 watchdog==6.0.0
 websockets==16.0
-docx2pdf==0.1.8
-pywin32==312
-pywin32-ctypes==0.2.3
+docx2pdf==0.1.8; sys_platform == 'win32'
+pywin32==312; sys_platform == 'win32'
+pywin32-ctypes==0.2.3; sys_platform == 'win32'
