@@ -567,9 +567,59 @@ if generate_btn:
                     
                     p.add_run(". During the training period, they will receive practical guidance from our mentors and work on assignments and project development activities. They will spend 14 hours per week, including learning, assignments, and project work, to gain hands-on experience and enhance their technical skills.")
             
+            import copy
+            from docx.oxml import OxmlElement
             from docx.text.paragraph import Paragraph
+
+            # 1. Find the 'No' column textbox to use as a template for paragraph alignment and spacing
+            no_txbx = next(tx for tx in doc.element.xpath('//*[local-name()="txbxContent"]') 
+                           if Paragraph(tx.xpath('*[local-name()="p"]')[0], doc._body).text.strip() == "No")
+            no_paras = no_txbx.xpath('*[local-name()="p"]')
+            no_pPrs = [copy.deepcopy(p.pPr) if p.pPr is not None else None for p in no_paras]
+
+            # 2. Rebuild the Names textbox structurally to match the 7-paragraph 'No' textbox
+            for txbx in doc.element.xpath('//*[local-name()="txbxContent"]'):
+                p_elements = txbx.xpath('*[local-name()="p"]')
+                if p_elements and "Student Name" in Paragraph(p_elements[0], doc._body).text:
+                    for p in p_elements:
+                        txbx.remove(p)
+                    for row in range(7):
+                        new_p = OxmlElement('w:p')
+                        if row < len(no_pPrs) and no_pPrs[row] is not None:
+                            new_p.append(copy.deepcopy(no_pPrs[row]))
+                        if row == 0:
+                            # Recreate Student Name header in Arial Black
+                            r = OxmlElement('w:r')
+                            rPr = OxmlElement('w:rPr')
+                            rFonts = OxmlElement('w:rFonts')
+                            rFonts.set('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}ascii', 'Arial Black')
+                            rPr.append(rFonts)
+                            rPr.append(OxmlElement('w:b')) # bold
+                            r.append(rPr)
+                            t = OxmlElement('w:t')
+                            t.text = "Student Name"
+                            r.append(t)
+                            new_p.append(r)
+                        elif row in [2, 4, 6]:
+                            # Recreate names in Arial 12pt
+                            student_idx = (row - 2) // 2
+                            name = str(students_data[student_idx].get('Student Name', '')).strip() if student_idx < len(students_data) else ''
+                            if name:
+                                r = OxmlElement('w:r')
+                                rPr = OxmlElement('w:rPr')
+                                sz = OxmlElement('w:sz')
+                                sz.set('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val', '24') # 12pt
+                                rPr.append(sz)
+                                r.append(rPr)
+                                t = OxmlElement('w:t')
+                                t.text = name
+                                r.append(t)
+                                new_p.append(r)
+                        txbx.append(new_p)
+
+            # 3. Extract all paragraphs again for enrollment numbers replacement
             all_paragraphs = list(doc.paragraphs)
-            all_paragraphs.extend([Paragraph(p, doc._body) for p in doc.element.xpath('//w:txbxContent//w:p')])
+            all_paragraphs.extend([Paragraph(p, doc._body) for p in doc.element.xpath('//*[local-name()="txbxContent"]//*[local-name()="p"]')])
 
             placeholders = [
                 ('Khambhadiya Taksh Khodabhai', '202435802415'),
